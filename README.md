@@ -1,8 +1,8 @@
 # UsePopCorn
 
-Project created using Create-React-App
-Consists of a simple UI that shows movies searched by user by fetching API.
-The films can also be rated by used, showing additional IMDB stas.
+Project created using Create-React-App. <br>
+Consists of a simple UI that shows movies searched by user by fetching API.<br>
+The films can also be rated by used, showing additional IMDB stats.
 
 ## Usage
 
