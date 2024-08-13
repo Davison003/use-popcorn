@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating.js";
+import { useMovies } from "./useMovies.js";
+import { useLocalStorageState } from "./useLocalStorageState.js";
 
 const omdbApiURL = "https://www.omdbapi.com/?apikey=4aa25208&";
 
@@ -7,16 +9,15 @@ const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  // STATE HOOK DECLARATIONS
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
 
-  const [watched, setWatched] = useState(function () {
-    const storedValue = JSON.parse(localStorage.getItem("watchedMovies"));
-    return storedValue;
-  });
+  // CUSTOM HOOKS
+  const { movies, isLoading, error } = useMovies(query);
+  const [watched, setWatched] = useLocalStorageState([], "watchedMovies");
+
+  // HANDLER FUNCTIONS
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
   }
@@ -27,65 +28,11 @@ export default function App() {
 
   function handleAddWatchedMovie(movie) {
     setWatched((watched) => [...watched, movie]);
-
-    // localStorage.setItem("watchedMovies", JSON.stringify([...watched, movie]));
   }
 
   function handleDeleteWatchedMovie(movieId) {
     setWatched((watched) => watched.filter((m) => m.imdbID !== movieId));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watchedMovies", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(`${omdbApiURL}s=${query}`, {
-            signal: controller.signal,
-          });
-
-          if (!res.ok)
-            throw new Error("Something went wrong with fetching data");
-
-          const data = await res.json();
-
-          if (data.Response === "False") throw new Error("No movies found");
-          setMovies((movies) => data.Search);
-          setError("");
-        } catch (err) {
-          if (err.name !== "AbortError") {
-            setError(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (query.length < 3) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
-  );
 
   return (
     <>
@@ -149,6 +96,29 @@ function Logo() {
   );
 }
 function Search({ query, setQuery }) {
+  const inputElement = useRef(null);
+
+  // useEffect(function () {
+  // }, []);
+
+  useEffect(
+    function () {
+      inputElement.current.focus();
+      function callback(evt) {
+        if (document.activeElement === inputElement.current) return;
+
+        if (evt.code === "Enter") {
+          inputElement.current.focus();
+          setQuery("");
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      return () => document.removeEventListener("keydown", callback);
+    },
+    [setQuery]
+  );
+
   return (
     <input
       className="search"
@@ -156,6 +126,7 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputElement}
     />
   );
 }
@@ -221,6 +192,15 @@ function MovieDetails({
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [userRating, setUserRating] = useState("");
+
+  const countRef = useRef(0);
+
+  useEffect(
+    function () {
+      if (userRating) countRef.current += 1;
+    },
+    [userRating]
+  );
 
   const {
     Title: title,
@@ -290,6 +270,7 @@ function MovieDetails({
       poster,
       runtime: Number(runtime.split(" ").at(0)),
       userRating,
+      countRatingDecisions: countRef.current,
     };
     // if (watched.some((movie) => movie.imdbID === selectedId))
     //   onDeleteWatchedMovie(newWatchedMovie);
