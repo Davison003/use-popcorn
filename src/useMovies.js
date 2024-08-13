@@ -9,49 +9,53 @@ export function useMovies(query) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(function () {
-    // ?. means optional chaining
-    //   callback?.();
+  useEffect(
+    function () {
+      // ?. means optional chaining
+      //   callback?.();
 
-    const controller = new AbortController();
+      const controller = new AbortController();
 
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        setError("");
-        const res = await fetch(`${omdbApiURL}s=${query}`, {
-          signal: controller.signal,
-        });
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError("");
+          const res = await fetch(`${omdbApiURL}s=${query}`, {
+            signal: controller.signal,
+          });
 
-        if (!res.ok) throw new Error("Something went wrong with fetching data");
+          if (!res.ok)
+            throw new Error("Something went wrong with fetching data");
 
-        const data = await res.json();
+          const data = await res.json();
 
-        if (data.Response === "False") throw new Error("No movies found");
-        setMovies((movies) => data.Search);
-        setError("");
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(err.message);
+          if (data.Response === "False") throw new Error("No movies found");
+          setMovies((movies) => data.Search);
+          setError("");
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
+        } finally {
+          setIsLoading(false);
         }
-      } finally {
-        setIsLoading(false);
       }
-    }
 
-    if (query.length < 3) {
-      setMovies([]);
-      setError("");
-      return;
-    }
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        return;
+      }
 
-    //   handleCloseMovie();
-    fetchMovies();
+      //   handleCloseMovie();
+      fetchMovies();
 
-    return function () {
-      controller.abort();
-    };
-  }, []);
+      return function () {
+        controller.abort();
+      };
+    },
+    [query]
+  );
 
   return { movies, isLoading, error };
 }

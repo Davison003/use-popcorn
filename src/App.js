@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating.js";
 import { useMovies } from "./useMovies.js";
 import { useLocalStorageState } from "./useLocalStorageState.js";
+import { useKey } from "./useKey.js";
 
 const omdbApiURL = "https://www.omdbapi.com/?apikey=4aa25208&";
 
@@ -17,6 +18,7 @@ export default function App() {
   const { movies, isLoading, error } = useMovies(query);
   const [watched, setWatched] = useLocalStorageState([], "watchedMovies");
 
+  console.log(movies);
   // HANDLER FUNCTIONS
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (id === selectedId ? null : id));
@@ -98,26 +100,30 @@ function Logo() {
 function Search({ query, setQuery }) {
   const inputElement = useRef(null);
 
-  // useEffect(function () {
-  // }, []);
+  useKey("enter", () => {
+    if (document.activeElement === inputElement.current) return;
 
-  useEffect(
-    function () {
-      inputElement.current.focus();
-      function callback(evt) {
-        if (document.activeElement === inputElement.current) return;
+    inputElement.current.focus();
+    setQuery("");
+  });
 
-        if (evt.code === "Enter") {
-          inputElement.current.focus();
-          setQuery("");
-        }
-      }
-      document.addEventListener("keydown", callback);
+  // useEffect(
+  //   function () {
+  //     inputElement.current.focus();
+  //     function callback(evt) {
+  //       if (document.activeElement === inputElement.current) return;
 
-      return () => document.removeEventListener("keydown", callback);
-    },
-    [setQuery]
-  );
+  //       if (evt.code === "Enter") {
+  //         inputElement.current.focus();
+  //         setQuery("");
+  //       }
+  //     }
+  //     document.addEventListener("keydown", callback);
+
+  //     return () => document.removeEventListener("keydown", callback);
+  //   },
+  //   [setQuery]
+  // );
 
   return (
     <input
@@ -219,20 +225,7 @@ function MovieDetails({
   const watchedUserRating =
     watched.find((movie) => movie.imdbID === selectedId)?.userRating || "";
 
-  useEffect(
-    function () {
-      function callback(evt) {
-        if (evt.code === "Escape") onCloseMovie();
-      }
-
-      document.addEventListener("keydown", callback);
-
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onCloseMovie]
-  );
+  useKey("escape", onCloseMovie);
 
   useEffect(
     function () {
