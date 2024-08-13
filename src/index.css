@@ -56,6 +56,12 @@ body {
   border-radius: 0.9rem;
   overflow: scroll;
   position: relative;
+  scrollbar-width: none;
+}
+
+.box,
+.list {
+  scroll-behavior: smooth;
 }
 
 .loader {
@@ -139,6 +145,7 @@ body {
   list-style: none;
   padding: 0.8rem 0;
   overflow: scroll;
+  scrollbar-width: none;
 }
 
 .list-watched {
